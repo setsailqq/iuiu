@@ -6,7 +6,7 @@
  
 >细水长流，低调使用，在精不在多，许多重复或失效任务容易黑！
 
-## 青龙[INSTALL](https://github.com/6dylan6/jdpro/tree/main/docker)
+
 
 ## 指令
 
@@ -17,13 +17,13 @@
 在青龙面板添加拉库任务 ，定时建议40 8-23/4 * * * 
 
 ```
-ql repo https://github.com/6dylan6/jdpro.git "jd_|jx_|jddj_" "backUp" "^jd[^_]|USER|JD|function|sendNotify"
+ql repo https://github.com/setsailqq/iuiu.git "jd_|jx_|jddj_" "backUp" "^jd[^_]|USER|JD|function|sendNotify"
 
 ```
 怎么都拉不成功，用下面指令！
 
 ```
-ql repo https://gitee.com/dylanote/jdpro.git "jd_|jx_|jddj_" "backUp" "^jd[^_]|USER|JD|function|sendNotify"
+ql repo https://gitee.com/setsailqq/iuiu.git "jd_|jx_|jddj_" "backUp" "^jd[^_]|USER|JD|function|sendNotify"
 
 ```
 
