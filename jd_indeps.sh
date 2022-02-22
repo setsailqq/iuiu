@@ -20,3 +20,4 @@ pnpm install -g moment
 pip install jieba
 
 echo "恭喜，已全部安装完成!"
+
