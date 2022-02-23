@@ -1,6 +1,6 @@
 /*
 搞鸡玩家-秒秒币
-Last Modified time: 2022-1-21
+Last Modified time: 2022-2-21
 活动入口：京东 首页秒杀
 更新地址：jd_ms.js
 已支持IOS双京东账号, Node.js支持N个京东账号
