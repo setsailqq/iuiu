@@ -2,7 +2,7 @@
  * 清空购物车，支持环境变量设置关键字，用@分隔，使用前请认真看对应注释
  * 由于不是用app来进行购物车删除，所以可能会出现部分购物车数据无法删除的问题，例如预购商品，属于正常
  */
-const $ = new Env('清空购物车');
+const $ = new Env('清空 购物车');
 //Node.js用户请在jdCookie.js处填写京东ck;
 const jdCookieNode = $.isNode() ? require('./jdCookie.js') : '';
 const notify = $.isNode() ? require('./sendNotify') : '';
