@@ -1,5 +1,5 @@
 /**
- 特务Z
+ 特  务Z
  脚本没有自动开卡，会尝试领取开卡奖励
  cron 23 8,14,18 * * * https://raw.githubusercontent.com/star261/jd/main/scripts/jd_productZ4Brand.js
  一天要跑2次
