@@ -74,13 +74,14 @@ RemainMessage += '【其他】京喜红包只能在京喜使用,京东红包有�
 let WP_APP_TOKEN_ONE = "";
 
 let TempBaipiao = "";
-if ($.isNode() && process.env.WP_APP_TOKEN_ONE) {
-	WP_APP_TOKEN_ONE = process.env.WP_APP_TOKEN_ONE;
-}
+let llgeterror=false;
 
 let doExJxBeans ="false";
 let time = new Date().getHours();
 if ($.isNode()) {
+	if (process.env.WP_APP_TOKEN_ONE) {		
+		WP_APP_TOKEN_ONE = process.env.WP_APP_TOKEN_ONE;
+	}
 	if(process.env.BEANCHANGE_ExJxBeans=="true"){
 		if (time >= 17){ 
 			console.log(`检测到设定了临期京豆转换喜豆...`);
@@ -90,6 +91,11 @@ if ($.isNode()) {
 		}
 	}
 }
+//if(WP_APP_TOKEN_ONE)
+	//console.log(`检测到已配置Wxpusher的Token，启用一对一推送...`);
+//else
+	//console.log(`检测到未配置Wxpusher的Token，禁用一对一推送...`);
+		
 if ($.isNode() && process.env.BEANCHANGE_PERSENT) {
 	intPerSent = parseInt(process.env.BEANCHANGE_PERSENT);
 	console.log(`检测到设定了分段通知:` + intPerSent);
@@ -118,17 +124,18 @@ if ($.isNode() && process.env.BEANCHANGE_USERGP4) {
 	//EnableMonth = process.env.BEANCHANGE_ENABLEMONTH;
 //}
 
-if ($.isNode() && process.env.BEANCHANGE_ALLNOTIFY) {
-	strAllNotify=process.env.BEANCHANGE_ALLNOTIFY;	
-	console.log(`检测到设定了公告,将在推送信息中置顶显示...`);
-	strAllNotify = "✨✨✨✨✨✨✨公告✨✨✨✨✨✨✨\n"+strAllNotify;
-	console.log(strAllNotify);
-	strAllNotify +="\n🎏🎏🎏🎏🎏🎏🎏🎏🎏🎏🎏🎏🎏🎏🎏\n"
-}
 if ($.isNode() && process.env.BEANCHANGE_SUBNOTIFY) {	
 	strSubNotify=process.env.BEANCHANGE_SUBNOTIFY;
 	strSubNotify+="\n";
 	console.log(`检测到预览置顶内容,将在一对一推送的预览显示...\n`);	
+}
+
+if ($.isNode() && process.env.BEANCHANGE_ALLNOTIFY) {	
+	strAllNotify=process.env.BEANCHANGE_ALLNOTIFY;
+	console.log(`检测到设定了公告,将在推送信息中置顶显示...`);
+	strAllNotify = "✨✨✨✨✨✨✨公告✨✨✨✨✨✨✨\n"+strAllNotify;
+	console.log(strAllNotify+"\n");
+	strAllNotify +="\n🎏🎏🎏🎏🎏🎏🎏🎏🎏🎏🎏🎏🎏🎏🎏\n"
 }
 
 
@@ -230,7 +237,7 @@ if(DisableIndex!=-1){
 	EnableJDGC=false;	
 }
 //领现金
-let EnableCash=false;
+let EnableCash=true;
 DisableIndex=strDisableList.findIndex((item) => item === "领现金");
 if(DisableIndex!=-1){
 	console.log("检测到设定关闭领现金查询");
@@ -312,6 +319,13 @@ if(DisableIndex!=-1){
 			$.todayinJxBean=0;
 			$.todayOutJxBean=0;	
 			$.xibeanCount = 0;
+			$.PigPet = '';
+			$.YunFeiTitle="";
+			$.YunFeiQuan = 0;
+			$.YunFeiQuanEndTime = "";
+			$.YunFeiTitle2="";
+			$.YunFeiQuan2 = 0;
+			$.YunFeiQuanEndTime2 = "";
 			TempBaipiao = "";
 			strGuoqi="";
 			console.log(`******开始查询【京东账号${$.index}】${$.nickName || $.UserName}*********`);
@@ -344,14 +358,19 @@ if(DisableIndex!=-1){
 			if(EnableJdMs)
 				await getMs();
 			
-			//东东农场			
-			if(EnableJdFruit){
-				await jdfruitRequest('taskInitForFarm', {
-					"version": 14,
-					"channel": 1,
-					"babelChannel": "120"
-				});
-				await getjdfruit();
+			//东东农场
+			if (EnableJdFruit) {
+			    llgeterror = false;
+			    await getjdfruit();				
+			    if (llgeterror) {
+					console.log(`东东农场API查询失败,等待10秒后再次尝试...`)
+					await $.wait(10 * 1000);					
+			        await getjdfruit();
+			    }				
+				if (llgeterror) {
+					console.log(`东东农场API查询失败,有空重启路由器换个IP吧.`)
+				}
+			    
 			}
 			//极速金币
 			if(EnableJdSpeed)
@@ -390,6 +409,11 @@ if(DisableIndex!=-1){
 				await GetJxBeanInfo();
 				await jxbean();
 			}
+			
+			//金融养猪
+			if(EnablePigPet)	
+				await GetPigPetInfo();
+			
 			await showMsg();
 			if (intPerSent > 0) {
 				if ((i + 1) % intPerSent == 0) {
@@ -689,14 +713,14 @@ async function showMsg() {
 	ReturnMessage += `\n`;	
 	
 	if ($.beanCount){		
-		ReturnMessage += `【当前京豆】${$.beanCount}豆(≈${(($.beanCount-$.beanChangeXi)/ 100).toFixed(2)}元)\n`;
-		strsummary+= `【当前京豆】${$.beanCount}豆(≈${(($.beanCount-$.beanChangeXi)/ 100).toFixed(2)}元)\n`;	
+		ReturnMessage += `【当前京豆】${$.beanCount-$.beanChangeXi}豆(≈${(($.beanCount-$.beanChangeXi)/ 100).toFixed(2)}元)\n`;
+		strsummary+= `【当前京豆】${$.beanCount-$.beanChangeXi}豆(≈${(($.beanCount-$.beanChangeXi)/ 100).toFixed(2)}元)\n`;	
 	} else {
 		if($.levelName || $.JingXiang)
 			ReturnMessage += `【当前京豆】获取失败,接口返回空数据\n`;
 		else{
-			ReturnMessage += `【当前京豆】${$.beanCount}豆(≈${(($.beanCount-$.beanChangeXi)/ 100).toFixed(2)}元)\n`;
-			strsummary += `【当前京豆】${$.beanCount}豆(≈${(($.beanCount-$.beanChangeXi)/ 100).toFixed(2)}元)\n`;
+			ReturnMessage += `【当前京豆】${$.beanCount-$.beanChangeXi}豆(≈${(($.beanCount-$.beanChangeXi)/ 100).toFixed(2)}元)\n`;
+			strsummary += `【当前京豆】${$.beanCount-$.beanChangeXi}豆(≈${(($.beanCount-$.beanChangeXi)/ 100).toFixed(2)}元)\n`;
 		}			
 	}
 	
@@ -846,6 +870,23 @@ async function showMsg() {
 
 	}
 	
+	if ($.PigPet) {
+		if (userIndex2 != -1) {
+			ReceiveMessageGp2 += `【账号${IndexGp2} ${$.nickName || $.UserName}】${$.PigPet} (金融养猪)\n`;
+		}
+		if (userIndex3 != -1) {
+			ReceiveMessageGp3 += `【账号${IndexGp3} ${$.nickName || $.UserName}】${$.PigPet} (金融养猪)\n`;
+		}
+		if (userIndex4 != -1) {
+			ReceiveMessageGp4 += `【账号${IndexGp4} ${$.nickName || $.UserName}】${$.PigPet} (金融养猪)\n`;
+		}
+		if (userIndex2 == -1 && userIndex3 == -1 && userIndex4 == -1) {
+			allReceiveMessage += `【账号${IndexAll} ${$.nickName || $.UserName}】${$.PigPet} (金融养猪)\n`;
+		}
+
+		TempBaipiao += `【金融养猪】${$.PigPet} 可以兑换了!\n`;
+
+	}
 	if(EnableJDPet){
 		llPetError=false;
 		const response = await PetRequest('energyCollect');
@@ -915,6 +956,23 @@ async function showMsg() {
 	ReturnMessage += `🧧🧧🧧红包明细🧧🧧🧧\n`;
 	ReturnMessage += `${$.message}`;
 	strsummary +=`${$.message}`;
+	
+	if($.YunFeiQuan){
+		var strTempYF="【免运费券】"+$.YunFeiQuan+"张";
+		if($.YunFeiQuanEndTime)
+			strTempYF+="(有效期至"+$.YunFeiQuanEndTime+")";
+		strTempYF+="\n";
+		ReturnMessage +=strTempYF
+		strsummary +=strTempYF;
+	}
+	if($.YunFeiQuan2){
+		var strTempYF2="【免运费券】"+$.YunFeiQuan2+"张";
+		if($.YunFeiQuanEndTime2)
+			strTempYF+="(有效期至"+$.YunFeiQuanEndTime2+")";
+		strTempYF2+="\n";
+		ReturnMessage +=strTempYF2
+		strsummary +=strTempYF2;
+	}
 	
 	if (userIndex2 != -1) {
 		allMessageGp2 += ReturnMessageTitle+ReturnMessage + `\n`;
@@ -1030,6 +1088,7 @@ async function bean() {
 	}
 	
 	await redPacket(); 
+	await getCoupon();
 }
 
 async function Monthbean() {
@@ -1104,22 +1163,21 @@ async function Monthbean() {
 
 async function jdCash() {
 	let functionId = "cash_homePage";
-	let body = "%7B%7D";
-	let uuid = randomString(16);
+	let body = {};	  
 	console.log(`正在获取领现金任务签名...`);
 	isSignError = false;
-	let sign = await getSign(functionId, decodeURIComponent(body), uuid)
+	let sign = await getSign(functionId, body);
 		if (isSignError) {
 			console.log(`领现金任务签名获取失败,等待2秒后再次尝试...`)
 			await $.wait(2 * 1000);
 			isSignError = false;
-			sign = await getSign(functionId, decodeURIComponent(body), uuid);
+			sign =await getSign(functionId, body);
 		}
 		if (isSignError) {
 			console.log(`领现金任务签名获取失败,等待2秒后再次尝试...`)
 			await $.wait(2 * 1000);
 			isSignError = false;
-			sign = await getSign(functionId, decodeURIComponent(body), uuid);
+			sign = await getSign(functionId, body);
 		}
 		if (!isSignError) {
 			console.log(`领现金任务签名获取成功...`)
@@ -1128,9 +1186,8 @@ async function jdCash() {
 			$.jdCash = 0;
 			return
 		}
-		let url = `${JD_API_HOST}?functionId=${functionId}&build=167774&client=apple&clientVersion=10.1.0&uuid=${uuid}&${sign}`
 		return new Promise((resolve) => {
-			$.post(apptaskUrl(url, body), async(err, resp, data) => {
+			$.post(apptaskUrl(functionId, sign), async (err, resp, data) => {
 				try {
 					if (err) {
 						console.log(`${JSON.stringify(err)}`)
@@ -1139,7 +1196,7 @@ async function jdCash() {
 						if (safeGet(data)) {
 							data = JSON.parse(data);
 							if (data.code === 0 && data.data.result) {
-								$.jdCash = data.data.result.totalMoney || 0;
+								$.jdCash = data.data.result.totalMoney || 0;								
 								return
 							}
 						}
@@ -1153,57 +1210,56 @@ async function jdCash() {
 			})
 		})
 }
-function apptaskUrl(url, body) {
-	return {
-		url,
-		body: `body=${body}`,
-		headers: {
-			'Cookie': cookie,
-			'Host': 'api.m.jd.com',
-			'Connection': 'keep-alive',
-			'Content-Type': 'application/x-www-form-urlencoded',
-			'Referer': '',
-			'User-Agent': 'JD4iPhone/167774 (iPhone; iOS 14.7.1; Scale/3.00)',
-			'Accept-Language': 'zh-Hans-CN;q=1',
-			'Accept-Encoding': 'gzip, deflate, br',
-		}
-	}
+function apptaskUrl(functionId = "", body = "") {
+  return {
+    url: `${JD_API_HOST}?functionId=${functionId}`,
+    body,
+    headers: {
+      'Cookie': cookie,
+      'Host': 'api.m.jd.com',
+      'Connection': 'keep-alive',
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Referer': '',
+      'User-Agent': 'JD4iPhone/167774 (iPhone; iOS 14.7.1; Scale/3.00)',
+      'Accept-Language': 'zh-Hans-CN;q=1',
+      'Accept-Encoding': 'gzip, deflate, br',
+    }
+  }
 }
-function getSign(functionid, body, uuid) {
-	return new Promise(async resolve => {
-		let data = {
-			"functionId": functionid,
-			"body": body,
-			"uuid": uuid,
-			"client": "apple",
-			"clientVersion": "10.1.0"
-		}
-		let HostArr = ['jdsign.cf', 'signer.nz.lu']
-		let Host = HostArr[Math.floor((Math.random() * HostArr.length))]
-			let options = {
-			url: `https://cdn.nz.lu/ddo`,
-			body: JSON.stringify(data),
-			headers: {
-				Host,
-				"User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1 Edg/87.0.4280.88"
-			},
-			timeout: 15000
-		}
-		$.post(options, (err, resp, data) => {
-			try {
-				if (err) {
-					console.log(`${JSON.stringify(err)}`);
-					isSignError = true;
-					//console.log(`${$.name} getSign API请求失败，请检查网路重试`)
-				} else {}
-			} catch (e) {
-				$.logErr(e, resp)
-			}
-			finally {
-				resolve(data);
-			}
-		})
-	})
+function getSign(functionId, body) {
+  return new Promise(async resolve => {
+    let data = {
+      functionId,
+      body: JSON.stringify(body),
+      "client":"apple",
+      "clientVersion":"10.3.0"
+    }
+    let HostArr = ['jdsign.cf', 'signer.nz.lu']
+    let Host = HostArr[Math.floor((Math.random() * HostArr.length))]
+    let options = {
+      url: `https://cdn.nz.lu/ddo`,
+      body: JSON.stringify(data),
+      headers: {
+        Host,
+        "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1 Edg/87.0.4280.88"
+      },
+      timeout: 30 * 1000
+    }
+    $.post(options, (err, resp, data) => {
+      try {
+        if (err) {
+          console.log(JSON.stringify(err))
+          console.log(`${$.name} getSign API请求失败，请检查网路重试`)
+        } else {
+
+        }
+      } catch (e) {
+        $.logErr(e, resp)
+      } finally {
+        resolve(data);
+      }
+    })
+  })
 }
 function TotalBean() {
 	return new Promise(async resolve => {
@@ -1543,6 +1599,127 @@ function redPacket() {
 	})
 }
 
+function getCoupon() {
+    return new Promise(resolve => {
+        let options = {
+            url: `https://wq.jd.com/activeapi/queryjdcouponlistwithfinance?state=1&wxadd=1&filterswitch=1&_=${Date.now()}&sceneval=2&g_login_type=1&callback=jsonpCBKB&g_ty=ls`,
+            headers: {
+                'authority': 'wq.jd.com',
+                "User-Agent": $.isNode() ? (process.env.JD_USER_AGENT ? process.env.JD_USER_AGENT : (require('./USER_AGENTS').USER_AGENT)) : ($.getdata('JDUA') ? $.getdata('JDUA') : "jdapp;iPhone;9.4.4;14.3;network/4g;Mozilla/5.0 (iPhone; CPU iPhone OS 14_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148;supportJDSHWK/1"),
+                'accept': '*/*',
+                'referer': 'https://wqs.jd.com/',
+                'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8',
+                'cookie': cookie
+            }
+        }
+        $.get(options, async(err, resp, data) => {
+            try {
+                data = JSON.parse(data.match(new RegExp(/jsonpCBK.?\((.*);*/))[1]);
+                let couponTitle = '';
+                let couponId = '';
+                // 删除可使用且非超市、生鲜、京贴;
+                let useable = data.coupon.useable;
+                $.todayEndTime = new Date(new Date(new Date().getTime()).setHours(23, 59, 59, 999)).getTime();
+                $.tomorrowEndTime = new Date(new Date(new Date().getTime() + 24 * 60 * 60 * 1000).setHours(23, 59, 59, 999)).getTime();
+				$.platFormInfo="";
+                for (let i = 0; i < useable.length; i++) {
+					//console.log(useable[i]);
+                    if (useable[i].limitStr.indexOf('全品类') > -1) {
+                        $.beginTime = useable[i].beginTime;
+                        if ($.beginTime < new Date().getTime() && useable[i].quota < 20 && useable[i].coupontype === 1) {                           
+							//$.couponEndTime = new Date(parseInt(useable[i].endTime)).Format('yyyy-MM-dd');
+                            $.couponName = useable[i].limitStr;
+							if (useable[i].platFormInfo) 
+								$.platFormInfo = useable[i].platFormInfo;
+							
+							$.message += `【全品类券】满${useable[i].quota}减${useable[i].discount}元`;
+							
+							if (useable[i].endTime < $.todayEndTime) {
+								$.message += `(今日过期,${$.platFormInfo})\n`;
+							} else if (useable[i].endTime < $.tomorrowEndTime) {
+								$.message += `(明日将过期,${$.platFormInfo})\n`;
+							} else {
+								$.message += `(${$.platFormInfo})\n`;
+							}
+							
+                        }
+                    }
+					if (useable[i].couponTitle.indexOf('运费券') > -1 && useable[i].limitStr.indexOf('自营商品运费') > -1) {
+					    if (!$.YunFeiTitle) {
+					        $.YunFeiTitle = useable[i].couponTitle;
+					        $.YunFeiQuanEndTime = new Date(parseInt(useable[i].endTime)).Format('yyyy-MM-dd');
+					        $.YunFeiQuan += 1;
+					    } else {
+					        if ($.YunFeiTitle == useable[i].couponTitle) {
+					            $.YunFeiQuanEndTime = new Date(parseInt(useable[i].endTime)).Format('yyyy-MM-dd');
+					            $.YunFeiQuan += 1;
+					        } else {
+					            if (!$.YunFeiTitle2)
+					                $.YunFeiTitle2 = useable[i].couponTitle;
+								
+					            if ($.YunFeiTitle2 == useable[i].couponTitle) {
+					                $.YunFeiQuanEndTime2 = new Date(parseInt(useable[i].endTime)).Format('yyyy-MM-dd');
+					                $.YunFeiQuan2 += 1;
+					            }
+					        }
+
+					    }
+
+					}
+                    /* if (useable[i].couponTitle.indexOf('极速版APP活动') > -1) {						
+                        $.couponEndTime = useable[i].endTime;
+                        $.startIndex = useable[i].couponTitle.indexOf('-') - 3;
+                        $.endIndex = useable[i].couponTitle.indexOf('元') + 1;
+                        $.couponName = useable[i].couponTitle.substring($.startIndex, $.endIndex);
+                        if ($.couponEndTime < $.todayEndTime) {
+                            $.message += `【极速版券】${$.couponName}(今日过期)\n`;
+                        } else if ($.couponEndTime < $.tomorrowEndTime) {
+                            $.message += `【极速版券】${$.couponName}(明日将过期)\n`;
+                        } else {
+                            $.couponEndTime = timeFormat(parseInt($.couponEndTime));
+                            $.message += `【极速版券】${$.couponName}(有效期至${$.couponEndTime})\n`;
+                        }
+                    } */
+                    //8是支付券， 7是白条券
+                    if (useable[i].couponStyle == 7 || useable[i].couponStyle == 8) {
+                        $.beginTime = useable[i].beginTime;
+                        if ($.beginTime > new Date().getTime() || useable[i].quota > 50 || useable[i].coupontype != 1) {
+                            continue;
+                        }
+                        
+                        if (useable[i].couponStyle == 8) {
+                            $.couponType = "支付立减";
+                        }else{
+							$.couponType = "白条优惠";
+						}
+						if(useable[i].discount<useable[i].quota)
+							$.message += `【${$.couponType}】满${useable[i].quota}减${useable[i].discount}元`;
+						else
+							$.message += `【${$.couponType}】立减${useable[i].discount}元`;
+                        if (useable[i].platFormInfo) 
+                            $.platFormInfo = useable[i].platFormInfo;                            
+                        
+                        //$.couponEndTime = new Date(parseInt(useable[i].endTime)).Format('yyyy-MM-dd');
+						
+                        if (useable[i].endTime < $.todayEndTime) {
+                            $.message += `(今日过期,${$.platFormInfo})\n`;
+                        } else if (useable[i].endTime < $.tomorrowEndTime) {
+                            $.message += `(明日将过期,${$.platFormInfo})\n`;
+                        } else {
+                            $.message += `(${$.platFormInfo})\n`;
+                        }
+                    }
+                }
+            } catch (e) {
+                $.logErr(e, resp);
+            }
+            finally {
+                resolve();
+            }
+        })
+    })
+}
+
 function getJdZZ() {
 	return new Promise(resolve => {
 		$.get(taskJDZZUrl("interactTaskIndex"), async(err, resp, data) => {
@@ -1652,10 +1829,13 @@ async function getjdfruit() {
 		$.post(option, (err, resp, data) => {
 			try {
 				if (err) {
-					console.log('\n东东农场: API查询请求失败 ‼️‼️');
-					console.log(JSON.stringify(err));
-					$.logErr(err);
+					if(!llgeterror){
+						console.log('\n东东农场: API查询请求失败 ‼️‼️');
+						console.log(JSON.stringify(err));
+					}
+					llgeterror = true;
 				} else {
+					llgeterror = false;
 					if (safeGet(data)) {
 						$.farmInfo = JSON.parse(data)
 							if ($.farmInfo.farmUserPro) {
@@ -1679,33 +1859,6 @@ async function getjdfruit() {
 				resolve();
 			}
 		})
-	})
-}
-
-function jdfruitRequest(function_id, body = {}, timeout = 1000) {
-	return new Promise(resolve => {
-		setTimeout(() => {
-			$.get(taskfruitUrl(function_id, body), (err, resp, data) => {
-				try {
-					if (err) {
-						console.log('\n东东农场: API查询请求失败 ‼️‼️')
-						console.log(JSON.stringify(err));
-						console.log(`function_id:${function_id}`)
-						$.logErr(err);
-					} else {
-						if (safeGet(data)) {
-							data = JSON.parse(data);
-							$.JDwaterEveryDayT = data.totalWaterTaskInit.totalWaterTaskTimes;
-						}
-					}
-				} catch (e) {
-					$.logErr(e, resp);
-				}
-				finally {
-					resolve(data);
-				}
-			})
-		}, timeout)
 	})
 }
 
@@ -2429,6 +2582,60 @@ function timeFormat(time) {
 		date = new Date();
 	}
 	return date.getFullYear() + '-' + ((date.getMonth() + 1) >= 10 ? (date.getMonth() + 1) : '0' + (date.getMonth() + 1)) + '-' + (date.getDate() >= 10 ? date.getDate() : '0' + date.getDate());
+}
+
+
+function GetPigPetInfo() {
+    return new Promise(async resolve => {
+        const body = {
+            "shareId": "",
+            "source": 2,
+            "channelLV": "juheye",
+            "riskDeviceParam": "{}",
+        }
+        $.post(taskPetPigUrl('pigPetLogin', body), async(err, resp, data) => {
+            try {
+                if (err) {
+                    console.log(`${JSON.stringify(err)}`)
+                    console.log(`GetPigPetInfo API请求失败，请检查网路重试`)
+                } else {
+                    if (data) {
+                        data = JSON.parse(data);
+                        if (data.resultData.resultData.wished && data.resultData.resultData.wishAward) {
+							$.PigPet=`${data.resultData.resultData.wishAward.name}`                           
+                        }
+                    } else {
+                        console.log(`GetPigPetInfo: 京东服务器返回空数据`)
+                    }
+                }
+            } catch (e) {
+                $.logErr(e, resp)
+            }
+            finally {
+                resolve();
+            }
+        })
+    })
+}
+
+
+function taskPetPigUrl(function_id, body) {
+  return {
+    url: `https://ms.jr.jd.com/gw/generic/uc/h5/m/${function_id}?_=${Date.now()}`,
+    body: `reqData=${encodeURIComponent(JSON.stringify(body))}`,
+    headers: {
+      'Accept': `*/*`,
+      'Origin': `https://u.jr.jd.com`,
+      'Accept-Encoding': `gzip, deflate, br`,
+      'Cookie': cookie,
+      'Content-Type': `application/x-www-form-urlencoded;charset=UTF-8`,
+      'Host': `ms.jr.jd.com`,
+      'Connection': `keep-alive`,
+      'User-Agent': UA,
+      'Referer': `https://u.jr.jd.com/`,
+      'Accept-Language': `zh-cn`
+    }
+  }
 }
 
 function GetDateTime(date) {
