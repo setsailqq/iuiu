@@ -1,7 +1,7 @@
 /**
  Author: JDHelloWorld
  东东电竞经理:脚本更新地址 jd_EsportsManager.js
- 更新时间：2021-06-20
+ 更新时间：2021-06-21
  活动入口：京东APP-东东农场-风车-电竞经理
  活动链接：https://xinruidddj-isv.isvjcloud.com
  已支持IOS双京东账号,Node.js支持N个京东账号
